@@ -496,6 +496,20 @@
             <span class="unit">天</span>
           </div>
         </div>
+        <div class="input-group">
+          <label>外出買咖啡來回時間</label>
+          <div class="input-wrap">
+            <input type="number" id="tripMinutes" value="15" min="0" step="1" oninput="update()">
+            <span class="unit">分鐘</span>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>員工平均時薪成本</label>
+          <div class="input-wrap">
+            <input type="number" id="hourlyWage" value="250" min="0" step="10" oninput="update()">
+            <span class="unit">元</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -504,13 +518,14 @@
   <div class="results-grid">
     <div class="result-card conv">
       <div class="rc-badge">🏪 便利商店</div>
-      <div class="rc-name">員工自購咖啡費用</div>
+      <div class="rc-name">員工自購咖啡費用<br><span style="font-size:11px;font-weight:400;color:var(--muted)">(含購買金額 + 時間成本)</span></div>
       <div class="rc-amount" id="convMonthly">—</div>
       <div class="rc-unit">元 / 月（全員合計）</div>
       <div class="rc-breakdown">
         <div class="rc-row"><span>單杯均價</span><span class="v" id="b-convPrice">—</span></div>
         <div class="rc-row"><span>每月總杯數</span><span class="v" id="b-totalCups">—</span></div>
         <div class="rc-row"><span>每員工月花費</span><span class="v" id="b-perEmp">—</span></div>
+        <div class="rc-row" style="border-top:1px dashed #F0D0C0;padding-top:8px;margin-top:2px;"><span>⏱ 外出時間成本</span><span class="v" id="b-timeCost" style="color:var(--red)">—</span></div>
       </div>
     </div>
     <div class="result-card rent">
@@ -601,7 +616,7 @@
       </div>
     </div>
     <div class="note">
-      ※ 以上試算以辦公室全員飲用為基準。租機方案含機器月租費＋耗材豆子費用，不含水費及電費（每月約 NT$100–200 可忽略不計）。便利商店費用以員工自費估算，亦可視為公司福利補貼成本參考。
+      ※ 便利商店費用已包含「購買金額」與「外出來回時間成本」（時間成本 = 來回分鐘數 ÷ 60 × 員工平均時薪，反映員工離開工作崗位的隱性成本）。租機方案含機器月租費＋耗材豆子費用，不含水費及電費（每月約 NT$100–200 可忽略不計）。
     </div>
   </div>
 
@@ -633,9 +648,13 @@
     const rentBase = parseFloat(document.getElementById('rentalFee').value) || 0;
     const beans = parseFloat(document.getElementById('beanCost').value) || 0;
     const days = parseFloat(document.getElementById('workDays').value) || 0;
+    const tripMin = parseFloat(document.getElementById('tripMinutes').value) || 0;
+    const wage = parseFloat(document.getElementById('hourlyWage').value) || 0;
 
     const totalCups = emp * cpd * days;
-    const convMo = totalCups * convP;
+    const purchaseCost = totalCups * convP;
+    const timeCostMo = emp * cpd * days * (tripMin / 60) * wage;
+    const convMo = purchaseCost + timeCostMo;
     const rentMo = rentBase + beans;
     const rentPerCup = totalCups > 0 ? rentMo / totalCups : 0;
     const savings = convMo - rentMo;
@@ -646,10 +665,144 @@
     document.getElementById('savingsMonth').textContent = fmt(savings);
     document.getElementById('yr-save-inline').textContent = fmt(savings * 12);
 
-    document.getElementById('b-convPrice').textContent = 'NT$' + convP + ' / 杯';
+    document.getElementById('b-convPrice').textContent = 'NT
+    document.getElementById('b-beanCost').textContent = 'NT$' + fmt(beans);
+    document.getElementById('b-rentPerCup').textContent = 'NT$' + fd(rentPerCup) + ' / 杯';
+
+    // Table
+    const periods = [[convMo, rentMo], [convMo*3, rentMo*3], [convMo*12, rentMo*12], [convMo*36, rentMo*36]];
+    const ids = ['mo','q','yr','3y'];
+    periods.forEach(([c, r], i) => {
+      const s = c - r;
+      document.getElementById('t-c-'+ids[i]).textContent = 'NT$' + fmt(c);
+      document.getElementById('t-r-'+ids[i]).textContent = 'NT$' + fmt(r);
+      document.getElementById('t-s-'+ids[i]).textContent = (s >= 0 ? '▼ ' : '▲ ') + 'NT$' + fmt(Math.abs(s));
+    });
+
+    // Per cup
+    const convPerCupTotal = totalCups > 0 ? convMo / totalCups : 0;
+    document.getElementById('cup-conv').textContent = fd(convPerCupTotal);
+    document.getElementById('cup-rent').textContent = fd(rentPerCup);
+    const cs = convPerCupTotal - rentPerCup;
+    document.getElementById('cup-save').textContent = fd(Math.abs(cs));
+    const pct = convPerCupTotal > 0 ? (cs / convPerCupTotal * 100) : 0;
+    document.getElementById('cup-pct').textContent = Math.abs(pct).toFixed(0) + '%';
+
+    // Bars
+    const maxY = Math.max(convMo * 12, rentMo * 12);
+    document.getElementById('bar-c').style.width = maxY > 0 ? (convMo*12/maxY*100).toFixed(1)+'%' : '0%';
+    document.getElementById('bar-r').style.width = maxY > 0 ? (rentMo*12/maxY*100).toFixed(1)+'%' : '0%';
+    document.getElementById('bv-c').textContent = 'NT$' + fmt(convMo*12);
+    document.getElementById('bv-r').textContent = 'NT$' + fmt(rentMo*12);
+  }
+
+  update();
+</script>
+</body>
+</html> + convP + ' / 杯';
     document.getElementById('b-totalCups').textContent = fmt(totalCups) + ' 杯';
-    document.getElementById('b-perEmp').textContent = emp > 0 ? 'NT$' + fmt(convMo / emp) : '—';
-    document.getElementById('b-rentBase').textContent = 'NT$' + fmt(rentBase);
+    document.getElementById('b-perEmp').textContent = emp > 0 ? 'NT
+    document.getElementById('b-beanCost').textContent = 'NT$' + fmt(beans);
+    document.getElementById('b-rentPerCup').textContent = 'NT$' + fd(rentPerCup) + ' / 杯';
+
+    // Table
+    const periods = [[convMo, rentMo], [convMo*3, rentMo*3], [convMo*12, rentMo*12], [convMo*36, rentMo*36]];
+    const ids = ['mo','q','yr','3y'];
+    periods.forEach(([c, r], i) => {
+      const s = c - r;
+      document.getElementById('t-c-'+ids[i]).textContent = 'NT$' + fmt(c);
+      document.getElementById('t-r-'+ids[i]).textContent = 'NT$' + fmt(r);
+      document.getElementById('t-s-'+ids[i]).textContent = (s >= 0 ? '▼ ' : '▲ ') + 'NT$' + fmt(Math.abs(s));
+    });
+
+    // Per cup
+    document.getElementById('cup-conv').textContent = fd(convP);
+    document.getElementById('cup-rent').textContent = fd(rentPerCup);
+    const cs = convP - rentPerCup;
+    document.getElementById('cup-save').textContent = fd(Math.abs(cs));
+    const pct = convP > 0 ? (cs / convP * 100) : 0;
+    document.getElementById('cup-pct').textContent = Math.abs(pct).toFixed(0) + '%';
+
+    // Bars
+    const maxY = Math.max(convMo * 12, rentMo * 12);
+    document.getElementById('bar-c').style.width = maxY > 0 ? (convMo*12/maxY*100).toFixed(1)+'%' : '0%';
+    document.getElementById('bar-r').style.width = maxY > 0 ? (rentMo*12/maxY*100).toFixed(1)+'%' : '0%';
+    document.getElementById('bv-c').textContent = 'NT$' + fmt(convMo*12);
+    document.getElementById('bv-r').textContent = 'NT$' + fmt(rentMo*12);
+  }
+
+  update();
+</script>
+</body>
+</html> + fmt(convMo / emp) : '—';
+    document.getElementById('b-timeCost').textContent = 'NT
+    document.getElementById('b-beanCost').textContent = 'NT$' + fmt(beans);
+    document.getElementById('b-rentPerCup').textContent = 'NT$' + fd(rentPerCup) + ' / 杯';
+
+    // Table
+    const periods = [[convMo, rentMo], [convMo*3, rentMo*3], [convMo*12, rentMo*12], [convMo*36, rentMo*36]];
+    const ids = ['mo','q','yr','3y'];
+    periods.forEach(([c, r], i) => {
+      const s = c - r;
+      document.getElementById('t-c-'+ids[i]).textContent = 'NT$' + fmt(c);
+      document.getElementById('t-r-'+ids[i]).textContent = 'NT$' + fmt(r);
+      document.getElementById('t-s-'+ids[i]).textContent = (s >= 0 ? '▼ ' : '▲ ') + 'NT$' + fmt(Math.abs(s));
+    });
+
+    // Per cup
+    document.getElementById('cup-conv').textContent = fd(convP);
+    document.getElementById('cup-rent').textContent = fd(rentPerCup);
+    const cs = convP - rentPerCup;
+    document.getElementById('cup-save').textContent = fd(Math.abs(cs));
+    const pct = convP > 0 ? (cs / convP * 100) : 0;
+    document.getElementById('cup-pct').textContent = Math.abs(pct).toFixed(0) + '%';
+
+    // Bars
+    const maxY = Math.max(convMo * 12, rentMo * 12);
+    document.getElementById('bar-c').style.width = maxY > 0 ? (convMo*12/maxY*100).toFixed(1)+'%' : '0%';
+    document.getElementById('bar-r').style.width = maxY > 0 ? (rentMo*12/maxY*100).toFixed(1)+'%' : '0%';
+    document.getElementById('bv-c').textContent = 'NT$' + fmt(convMo*12);
+    document.getElementById('bv-r').textContent = 'NT$' + fmt(rentMo*12);
+  }
+
+  update();
+</script>
+</body>
+</html> + fmt(timeCostMo);
+    document.getElementById('b-rentBase').textContent = 'NT
+    document.getElementById('b-beanCost').textContent = 'NT$' + fmt(beans);
+    document.getElementById('b-rentPerCup').textContent = 'NT$' + fd(rentPerCup) + ' / 杯';
+
+    // Table
+    const periods = [[convMo, rentMo], [convMo*3, rentMo*3], [convMo*12, rentMo*12], [convMo*36, rentMo*36]];
+    const ids = ['mo','q','yr','3y'];
+    periods.forEach(([c, r], i) => {
+      const s = c - r;
+      document.getElementById('t-c-'+ids[i]).textContent = 'NT$' + fmt(c);
+      document.getElementById('t-r-'+ids[i]).textContent = 'NT$' + fmt(r);
+      document.getElementById('t-s-'+ids[i]).textContent = (s >= 0 ? '▼ ' : '▲ ') + 'NT$' + fmt(Math.abs(s));
+    });
+
+    // Per cup
+    document.getElementById('cup-conv').textContent = fd(convP);
+    document.getElementById('cup-rent').textContent = fd(rentPerCup);
+    const cs = convP - rentPerCup;
+    document.getElementById('cup-save').textContent = fd(Math.abs(cs));
+    const pct = convP > 0 ? (cs / convP * 100) : 0;
+    document.getElementById('cup-pct').textContent = Math.abs(pct).toFixed(0) + '%';
+
+    // Bars
+    const maxY = Math.max(convMo * 12, rentMo * 12);
+    document.getElementById('bar-c').style.width = maxY > 0 ? (convMo*12/maxY*100).toFixed(1)+'%' : '0%';
+    document.getElementById('bar-r').style.width = maxY > 0 ? (rentMo*12/maxY*100).toFixed(1)+'%' : '0%';
+    document.getElementById('bv-c').textContent = 'NT$' + fmt(convMo*12);
+    document.getElementById('bv-r').textContent = 'NT$' + fmt(rentMo*12);
+  }
+
+  update();
+</script>
+</body>
+</html> + fmt(rentBase);
     document.getElementById('b-beanCost').textContent = 'NT$' + fmt(beans);
     document.getElementById('b-rentPerCup').textContent = 'NT$' + fd(rentPerCup) + ' / 杯';
 
