@@ -638,201 +638,67 @@
 </div>
 
 <script>
-  const fmt = n => Math.round(n).toLocaleString('zh-TW');
-  const fd = n => n.toFixed(1);
+  function fmt(n) { return Math.round(n).toLocaleString('zh-TW'); }
+  function fd(n) { return n.toFixed(1); }
 
   function update() {
-    const emp = parseFloat(document.getElementById('empCount').value) || 0;
-    const cpd = parseFloat(document.getElementById('cupsPerDay').value) || 0;
-    const convP = parseFloat(document.getElementById('convPrice').value) || 0;
-    const rentBase = parseFloat(document.getElementById('rentalFee').value) || 0;
-    const beans = parseFloat(document.getElementById('beanCost').value) || 0;
-    const days = parseFloat(document.getElementById('workDays').value) || 0;
-    const tripMin = parseFloat(document.getElementById('tripMinutes').value) || 0;
-    const wage = parseFloat(document.getElementById('hourlyWage').value) || 0;
+    var emp = parseFloat(document.getElementById('empCount').value) || 0;
+    var cpd = parseFloat(document.getElementById('cupsPerDay').value) || 0;
+    var convP = parseFloat(document.getElementById('convPrice').value) || 0;
+    var rentBase = parseFloat(document.getElementById('rentalFee').value) || 0;
+    var beans = parseFloat(document.getElementById('beanCost').value) || 0;
+    var days = parseFloat(document.getElementById('workDays').value) || 0;
+    var tripMin = parseFloat(document.getElementById('tripMinutes').value) || 0;
+    var wage = parseFloat(document.getElementById('hourlyWage').value) || 0;
 
-    const totalCups = emp * cpd * days;
-    const purchaseCost = totalCups * convP;
-    const timeCostMo = emp * cpd * days * (tripMin / 60) * wage;
-    const convMo = purchaseCost + timeCostMo;
-    const rentMo = rentBase + beans;
-    const rentPerCup = totalCups > 0 ? rentMo / totalCups : 0;
-    const savings = convMo - rentMo;
+    var totalCups = emp * cpd * days;
+    var purchaseCost = totalCups * convP;
+    var timeCostMo = emp * cpd * days * (tripMin / 60) * wage;
+    var convMo = purchaseCost + timeCostMo;
+    var rentMo = rentBase + beans;
+    var rentPerCup = totalCups > 0 ? rentMo / totalCups : 0;
+    var savings = convMo - rentMo;
 
-    // Cards
     document.getElementById('convMonthly').textContent = fmt(convMo);
     document.getElementById('rentMonthly').textContent = fmt(rentMo);
     document.getElementById('savingsMonth').textContent = fmt(savings);
     document.getElementById('yr-save-inline').textContent = fmt(savings * 12);
 
-    document.getElementById('b-convPrice').textContent = 'NT
+    document.getElementById('b-convPrice').textContent = 'NT$' + convP + ' / 杯';
+    document.getElementById('b-totalCups').textContent = fmt(totalCups) + ' 杯';
+    document.getElementById('b-perEmp').textContent = emp > 0 ? 'NT$' + fmt(convMo / emp) : '—';
+    document.getElementById('b-timeCost').textContent = 'NT$' + fmt(timeCostMo);
+    document.getElementById('b-rentBase').textContent = 'NT$' + fmt(rentBase);
     document.getElementById('b-beanCost').textContent = 'NT$' + fmt(beans);
     document.getElementById('b-rentPerCup').textContent = 'NT$' + fd(rentPerCup) + ' / 杯';
 
-    // Table
-    const periods = [[convMo, rentMo], [convMo*3, rentMo*3], [convMo*12, rentMo*12], [convMo*36, rentMo*36]];
-    const ids = ['mo','q','yr','3y'];
-    periods.forEach(([c, r], i) => {
-      const s = c - r;
+    var periods = [[convMo, rentMo], [convMo*3, rentMo*3], [convMo*12, rentMo*12], [convMo*36, rentMo*36]];
+    var ids = ['mo','q','yr','3y'];
+    for (var i = 0; i < periods.length; i++) {
+      var c = periods[i][0];
+      var r = periods[i][1];
+      var s = c - r;
       document.getElementById('t-c-'+ids[i]).textContent = 'NT$' + fmt(c);
       document.getElementById('t-r-'+ids[i]).textContent = 'NT$' + fmt(r);
       document.getElementById('t-s-'+ids[i]).textContent = (s >= 0 ? '▼ ' : '▲ ') + 'NT$' + fmt(Math.abs(s));
-    });
+    }
 
-    // Per cup
-    const convPerCupTotal = totalCups > 0 ? convMo / totalCups : 0;
+    var convPerCupTotal = totalCups > 0 ? convMo / totalCups : 0;
     document.getElementById('cup-conv').textContent = fd(convPerCupTotal);
     document.getElementById('cup-rent').textContent = fd(rentPerCup);
-    const cs = convPerCupTotal - rentPerCup;
+    var cs = convPerCupTotal - rentPerCup;
     document.getElementById('cup-save').textContent = fd(Math.abs(cs));
-    const pct = convPerCupTotal > 0 ? (cs / convPerCupTotal * 100) : 0;
+    var pct = convPerCupTotal > 0 ? (cs / convPerCupTotal * 100) : 0;
     document.getElementById('cup-pct').textContent = Math.abs(pct).toFixed(0) + '%';
 
-    // Bars
-    const maxY = Math.max(convMo * 12, rentMo * 12);
+    var maxY = Math.max(convMo * 12, rentMo * 12);
     document.getElementById('bar-c').style.width = maxY > 0 ? (convMo*12/maxY*100).toFixed(1)+'%' : '0%';
     document.getElementById('bar-r').style.width = maxY > 0 ? (rentMo*12/maxY*100).toFixed(1)+'%' : '0%';
     document.getElementById('bv-c').textContent = 'NT$' + fmt(convMo*12);
     document.getElementById('bv-r').textContent = 'NT$' + fmt(rentMo*12);
   }
 
-  update();
-</script>
-</body>
-</html> + convP + ' / 杯';
-    document.getElementById('b-totalCups').textContent = fmt(totalCups) + ' 杯';
-    document.getElementById('b-perEmp').textContent = emp > 0 ? 'NT
-    document.getElementById('b-beanCost').textContent = 'NT$' + fmt(beans);
-    document.getElementById('b-rentPerCup').textContent = 'NT$' + fd(rentPerCup) + ' / 杯';
-
-    // Table
-    const periods = [[convMo, rentMo], [convMo*3, rentMo*3], [convMo*12, rentMo*12], [convMo*36, rentMo*36]];
-    const ids = ['mo','q','yr','3y'];
-    periods.forEach(([c, r], i) => {
-      const s = c - r;
-      document.getElementById('t-c-'+ids[i]).textContent = 'NT$' + fmt(c);
-      document.getElementById('t-r-'+ids[i]).textContent = 'NT$' + fmt(r);
-      document.getElementById('t-s-'+ids[i]).textContent = (s >= 0 ? '▼ ' : '▲ ') + 'NT$' + fmt(Math.abs(s));
-    });
-
-    // Per cup
-    document.getElementById('cup-conv').textContent = fd(convP);
-    document.getElementById('cup-rent').textContent = fd(rentPerCup);
-    const cs = convP - rentPerCup;
-    document.getElementById('cup-save').textContent = fd(Math.abs(cs));
-    const pct = convP > 0 ? (cs / convP * 100) : 0;
-    document.getElementById('cup-pct').textContent = Math.abs(pct).toFixed(0) + '%';
-
-    // Bars
-    const maxY = Math.max(convMo * 12, rentMo * 12);
-    document.getElementById('bar-c').style.width = maxY > 0 ? (convMo*12/maxY*100).toFixed(1)+'%' : '0%';
-    document.getElementById('bar-r').style.width = maxY > 0 ? (rentMo*12/maxY*100).toFixed(1)+'%' : '0%';
-    document.getElementById('bv-c').textContent = 'NT$' + fmt(convMo*12);
-    document.getElementById('bv-r').textContent = 'NT$' + fmt(rentMo*12);
-  }
-
-  update();
-</script>
-</body>
-</html> + fmt(convMo / emp) : '—';
-    document.getElementById('b-timeCost').textContent = 'NT
-    document.getElementById('b-beanCost').textContent = 'NT$' + fmt(beans);
-    document.getElementById('b-rentPerCup').textContent = 'NT$' + fd(rentPerCup) + ' / 杯';
-
-    // Table
-    const periods = [[convMo, rentMo], [convMo*3, rentMo*3], [convMo*12, rentMo*12], [convMo*36, rentMo*36]];
-    const ids = ['mo','q','yr','3y'];
-    periods.forEach(([c, r], i) => {
-      const s = c - r;
-      document.getElementById('t-c-'+ids[i]).textContent = 'NT$' + fmt(c);
-      document.getElementById('t-r-'+ids[i]).textContent = 'NT$' + fmt(r);
-      document.getElementById('t-s-'+ids[i]).textContent = (s >= 0 ? '▼ ' : '▲ ') + 'NT$' + fmt(Math.abs(s));
-    });
-
-    // Per cup
-    document.getElementById('cup-conv').textContent = fd(convP);
-    document.getElementById('cup-rent').textContent = fd(rentPerCup);
-    const cs = convP - rentPerCup;
-    document.getElementById('cup-save').textContent = fd(Math.abs(cs));
-    const pct = convP > 0 ? (cs / convP * 100) : 0;
-    document.getElementById('cup-pct').textContent = Math.abs(pct).toFixed(0) + '%';
-
-    // Bars
-    const maxY = Math.max(convMo * 12, rentMo * 12);
-    document.getElementById('bar-c').style.width = maxY > 0 ? (convMo*12/maxY*100).toFixed(1)+'%' : '0%';
-    document.getElementById('bar-r').style.width = maxY > 0 ? (rentMo*12/maxY*100).toFixed(1)+'%' : '0%';
-    document.getElementById('bv-c').textContent = 'NT$' + fmt(convMo*12);
-    document.getElementById('bv-r').textContent = 'NT$' + fmt(rentMo*12);
-  }
-
-  update();
-</script>
-</body>
-</html> + fmt(timeCostMo);
-    document.getElementById('b-rentBase').textContent = 'NT
-    document.getElementById('b-beanCost').textContent = 'NT$' + fmt(beans);
-    document.getElementById('b-rentPerCup').textContent = 'NT$' + fd(rentPerCup) + ' / 杯';
-
-    // Table
-    const periods = [[convMo, rentMo], [convMo*3, rentMo*3], [convMo*12, rentMo*12], [convMo*36, rentMo*36]];
-    const ids = ['mo','q','yr','3y'];
-    periods.forEach(([c, r], i) => {
-      const s = c - r;
-      document.getElementById('t-c-'+ids[i]).textContent = 'NT$' + fmt(c);
-      document.getElementById('t-r-'+ids[i]).textContent = 'NT$' + fmt(r);
-      document.getElementById('t-s-'+ids[i]).textContent = (s >= 0 ? '▼ ' : '▲ ') + 'NT$' + fmt(Math.abs(s));
-    });
-
-    // Per cup
-    document.getElementById('cup-conv').textContent = fd(convP);
-    document.getElementById('cup-rent').textContent = fd(rentPerCup);
-    const cs = convP - rentPerCup;
-    document.getElementById('cup-save').textContent = fd(Math.abs(cs));
-    const pct = convP > 0 ? (cs / convP * 100) : 0;
-    document.getElementById('cup-pct').textContent = Math.abs(pct).toFixed(0) + '%';
-
-    // Bars
-    const maxY = Math.max(convMo * 12, rentMo * 12);
-    document.getElementById('bar-c').style.width = maxY > 0 ? (convMo*12/maxY*100).toFixed(1)+'%' : '0%';
-    document.getElementById('bar-r').style.width = maxY > 0 ? (rentMo*12/maxY*100).toFixed(1)+'%' : '0%';
-    document.getElementById('bv-c').textContent = 'NT$' + fmt(convMo*12);
-    document.getElementById('bv-r').textContent = 'NT$' + fmt(rentMo*12);
-  }
-
-  update();
-</script>
-</body>
-</html> + fmt(rentBase);
-    document.getElementById('b-beanCost').textContent = 'NT$' + fmt(beans);
-    document.getElementById('b-rentPerCup').textContent = 'NT$' + fd(rentPerCup) + ' / 杯';
-
-    // Table
-    const periods = [[convMo, rentMo], [convMo*3, rentMo*3], [convMo*12, rentMo*12], [convMo*36, rentMo*36]];
-    const ids = ['mo','q','yr','3y'];
-    periods.forEach(([c, r], i) => {
-      const s = c - r;
-      document.getElementById('t-c-'+ids[i]).textContent = 'NT$' + fmt(c);
-      document.getElementById('t-r-'+ids[i]).textContent = 'NT$' + fmt(r);
-      document.getElementById('t-s-'+ids[i]).textContent = (s >= 0 ? '▼ ' : '▲ ') + 'NT$' + fmt(Math.abs(s));
-    });
-
-    // Per cup
-    document.getElementById('cup-conv').textContent = fd(convP);
-    document.getElementById('cup-rent').textContent = fd(rentPerCup);
-    const cs = convP - rentPerCup;
-    document.getElementById('cup-save').textContent = fd(Math.abs(cs));
-    const pct = convP > 0 ? (cs / convP * 100) : 0;
-    document.getElementById('cup-pct').textContent = Math.abs(pct).toFixed(0) + '%';
-
-    // Bars
-    const maxY = Math.max(convMo * 12, rentMo * 12);
-    document.getElementById('bar-c').style.width = maxY > 0 ? (convMo*12/maxY*100).toFixed(1)+'%' : '0%';
-    document.getElementById('bar-r').style.width = maxY > 0 ? (rentMo*12/maxY*100).toFixed(1)+'%' : '0%';
-    document.getElementById('bv-c').textContent = 'NT$' + fmt(convMo*12);
-    document.getElementById('bv-r').textContent = 'NT$' + fmt(rentMo*12);
-  }
-
-  update();
+  window.onload = update;
 </script>
 </body>
 </html>
